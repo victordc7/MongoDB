@@ -1,0 +1,45 @@
+instalamos mongodb desde https://docs.mongodb.com/manual/installation/
+seguimos todas las instrucciones.
+Una vez instalado abrimos el archivo mongod.exe para iniciar el servidor, y despues mongo.exe para conectarnos al servidor, en esta segunda teminal que se abre es donde usaremos todos los comandos.
+
+haciendo analogias con el lenguaje sql en mongoDB tenemos bases de datos al igual sql, despues tenemos collecciones que son equivalentes a las tablas de sql y por ultimo documentos que son equivalentes a las tuplas de sql.
+
+Para ver las bases de datos que tenemos usamos 
+    Show databases;
+
+Para usar una base de datos usamos (podemos usar una base de datos que aun no haya sido creada)
+    use nombreDB;
+
+Para crear un documento usamos
+    nombreDocumento = { nombre : "victor", edad:24,...}
+una vez estamos posicionados en una base de datos y hayamos creado almenos un documento, podemos crear la base de datos y la coleccion al agregarle un documento de la siguiente manera
+    db.nombreColeccion.insert(nombreDocumento)
+Se puede insertar mas de un documento a la vez pasando como parametro al metodo insert() un arreglo
+    db.nombreColeccion.insert([documento1, documento2])
+
+Para ver el contenido de un documento basta con escribir el nombre del mismo.
+
+Para mostrar una coleccion usamos el comando
+    db.nombreColeccion.find();
+este comando es equivalente a la sentencia 
+    Select * from nombreTabla; de sql
+
+Para condicionar la busqueda se le pasa un argmento entre llaves al metodo find(), si queremos agregar mas de un condicional los separamos con comas dentro de las llaves ejemplo
+    db.nombreColeccion.find({nombre: "victor", edad:22});
+
+Para negar una condicion usamos {$ne:valor}
+    db.nombreColeccion.find( {nombre: { $ne: "victor" } });
+de esta forma nos mostraria todos los documentos donde el nombre no sea victor.
+
+Para actualizar un documento nos apollamos de una variable, guardamos la informacion del cocumento que queremos modificar en una variable de la siguiente manera,
+    var test = db.usuarios.findOne( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") } );
+lo ideal es condicionar por el id ya que es unico entre los documentos.
+Luego modificamos la propiedad de la variable que queramos cambiar por ejemplo
+    test.String = "VictorDC"
+por ultimo lo guardamos en la coleccion para actualizarla
+    db.usuarios.save( test )
+el metodo save guarda el documento que se le pasa como parametro, lo que hace es verificar el id primero si ya existe como es el caso de este documento, lo actualiza, si no tiene id o el id no existe en la coleccion creara el documento al igual que insert(). 
+
+Metodo update() recibe 2 parametros separados por comas, el primero entre llaves una condicional que nos va a indicar que documento actualizar (usar el id preferiblemente ya que este es unico) y el segundo aprametro el documento actualizado
+ejemplo
+    db.usuarios.update( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") }, test )
