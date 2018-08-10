@@ -7,8 +7,9 @@ haciendo analogias con el lenguaje sql en mongoDB tenemos bases de datos al igua
 Para ver las bases de datos que tenemos usamos 
     Show databases;
 
-Para usar una base de datos usamos (podemos usar una base de datos que aun no haya sido creada)
+Para usar una base de datos usamos
     use nombreDB;
+(podemos usar una base de datos que aun no haya sido creada)    
 
 Para crear un documento usamos
     nombreDocumento = { nombre : "victor", edad:24,...}
@@ -31,15 +32,74 @@ Para negar una condicion usamos {$ne:valor}
     db.nombreColeccion.find( {nombre: { $ne: "victor" } });
 de esta forma nos mostraria todos los documentos donde el nombre no sea victor.
 
-Para actualizar un documento nos apollamos de una variable, guardamos la informacion del cocumento que queremos modificar en una variable de la siguiente manera,
+Al metodo find se le puede pasar un segundo parametro despues de la condicion el cual indica que campos queremos que nos muestre por ejemplo si solo queremos ver el nombre escribimos
+    db.usuarios.find( {}, { nombre: 1 } )
+por defecto el id siempre se muestra
+el 1 retorna verdadero por lo cual mostrara ese campo, el 0 retorna falso si cambiamos el 1 por el 0 no nos mostraria el campo, por lo tanto si no queremos ver el id usariamos id: 0.
+
+Para actualizar un documento existen 3 metodos
+Para e primero nos apoyamos de una variable, guardamos la informacion del documento que queremos modificar en una variable de la siguiente manera,
     var test = db.usuarios.findOne( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") } );
 lo ideal es condicionar por el id ya que es unico entre los documentos.
 Luego modificamos la propiedad de la variable que queramos cambiar por ejemplo
-    test.String = "VictorDC"
+    test.nombre = "VictorDC"
 por ultimo lo guardamos en la coleccion para actualizarla
     db.usuarios.save( test )
 el metodo save guarda el documento que se le pasa como parametro, lo que hace es verificar el id primero si ya existe como es el caso de este documento, lo actualiza, si no tiene id o el id no existe en la coleccion creara el documento al igual que insert(). 
 
-Metodo update() recibe 2 parametros separados por comas, el primero entre llaves una condicional que nos va a indicar que documento actualizar (usar el id preferiblemente ya que este es unico) y el segundo aprametro el documento actualizado
+Metodo update() recibe 2 parametros separados por comas, el primero entre llaves una condicional que nos va a indicar que documento actualizar (usar el id preferiblemente ya que este es unico) y el segundo parametro el documento actualizado
 ejemplo
     db.usuarios.update( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") }, test )
+
+El ultimo metodo de actualizacion tambien usa el metodo update() pero en este caso no usamos una variable modificada para hacer los cambios, lo hacemos de la siguiente forma.
+    db.usuarios.update( { nombre: "victor" }, { $set: { nombre: "VictorDC" } } )
+El primer parametro es la condicion en donde se cumpla esa condicion es que se va a actualizar, el segundo parametro es el valor nuevo que tendra despues de la actualizacion. La sentencia anterior solo modifica el primer documento que encuentre el cual cumpla con la condicion, es decir, si varios documentos tienen la propiedad nombre : "victor" solo actualizara al primero de ellos.
+Si queres mos actualizar a todos los que cumplan con la propiedad debemos agregar un tercer parametro { multi: true }.
+    db.usuarios.update( { nombre: "victor" }, { $set: { nombre: "VictorDC" } }, { multi: true } )
+En el segundo parametro podemos modificar mas de un campo a la vez por ejemplo $set: { nombre: "VictorDC", edad: 25, otrocampo: "algo" }.
+Esto modificara todos los campos que se indican en set y si algun campo no existia en el documento sera agregado.
+
+Si no se agrega una condicional en el primer parametro todos los documentos haran match con el update, dependera si usas multi o no para definir si se modificara solo el primero (sea cual sea) o si se modificara toda la coleccion.
+para eliminar un campo se usa $unset y dentro de las llaves el nombre del capo a eliminar : 1 de la siguiente manera
+    db.usuarios.update( {}, { $unset: { otrocampo: 1 } }, { multi: true } )
+este ejemplo modificaria todos los documenos de la coleccion, eliminando el campo "otrocampo".
+
+El metodo remove elimina todos los documentos que cumplen con la condicion (no hay que usar el parametro multi), si no se coloca condicional eliminara todos los documentos de la coleccion.
+    db.usuarios.remove( { nombre: "victor" } )
+    db.usuarios.remove( {} )
+
+Para eliminar una coleccion completa se usa drop()
+    db.usuarios.drop()
+para eliminar toda la base de datos se usa
+    db.dropDatabase()
+
+Operadores
+para realizar busquedas o updates o lo que sea con condicionales en rango podemos querer usar <, >, etc.. Para esp tenemos la siguiente lsita de Operadores
+
+    $gt -> >
+    $gte -> >=
+    $lt -> <
+    $lte -> <=
+
+y se usan de la siguiente manera
+    db.usuarios.find( { edad: { $gt: 18 } } )
+me muestra todos los usuarios con edad mayor a 18.
+Para buscar en un rango parecido al between se usan 2 operadores de la siguiente manera.
+    db.usuarios.find( { edad: { $gt: 18, $lt: 25 } } )
+
+
+Cursores
+el metodo find devuelve un cursor que es como un conjunto de documentos asi la busqueda consiga 1 solo documento este resultado es un cursor, a diferencia de findOne el cual devuelve un documento.
+la diferencia esta que al usar el comando 
+    var test = db.usuarios.findOne( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") } );
+test es un documento y puedo modificarse para actualizar una coleccion por ejemplo, pero si se usa el comando
+    var test = db.usuarios.find( { "_id" : ObjectId("5b6d1e2a5c0302c4c380fa00") } );
+test sera un cursor.
+
+Estos cursores solo se pueden usar 1 vez, lo almacenas en una variable como en el ejemplo anterior lo usas una vez y ya la variable no funciona mas.
+Una de las utilidades de los cursores es usarlos en ciclos por ejemplo
+    test.forEach( function(d){ print(d.nombre) } )
+un uso comun es usar los cursores en ciclos forEach como en el ejemplo anterior, este metodo recibe como parametro una funcion la cual esta reciviendo como argumento un documento del cursor y luego entre llaves se define la logica de la funcion. En este caso se esta mandando a imprimir el campo edad de todos los documentos almacenados en el cursor.
+Recordemos que despues de ejecutar ese comando el cursor deja de existir.
+
+Metodos de Cursores
